@@ -304,28 +304,13 @@ namespace StellarisPlaysetSync
                 // Adding the playset will require multiple commands
                 using (var transaction = con.BeginTransaction())
                 {
-                    // Check if there is already a playset with the imported playset name
-                    // Either add a suffix or, if the IDs match, overwrite that playset 
-                    var psCheck = con.CreateCommand();
-                    // Internal Mod IDs are GUIDs and might not be the same between PCs
-                    // Steam ID of the mod must be checked instead
-                    bool deleteById = false;
-                    psCheck.CommandText = "SELECT * FROM playsets WHERE id=@psid";
-                    psCheck.Parameters.Add("@psid", SqliteType.Text).Value = importedPlayset.Id;
-                    using(var reader = psCheck.ExecuteReader())
+                    // Resolve name conflicts (where IDs are different)
+                    if (playsets.Where(p => p.Name == importedPlayset.Name && p.Id != importedPlayset.Id).Count() > 0)
                     {
-                        if(reader.Read())
-                        {
-                            deleteById = true;
-                        }
-                        // Reader found no ID-matches but there is a name match, so the playset will
-                        // have a suffix added
-                        else if (playsets.Where(p => p.Name == importedPlayset.Name).Count() > 0)
-                        {
-                            importedPlayset.Name += "_Imported";
-                        }
+                        importedPlayset.Name += "_Imported";
                     }
-                    if (deleteById)
+                    // Check if there are conflicting playset IDs
+                    if (playsets.Where(p => p.Id == importedPlayset.Id).Count() > 0)
                     {
                         var psDel = con.CreateCommand();
                         psDel.CommandText = "DELETE FROM playsets WHERE id=@psid";
@@ -368,6 +353,17 @@ namespace StellarisPlaysetSync
                             }
                         }
 
+                        // We need to add the mod, if missing, before adding to playsets_mods due to foreign key restraint
+                        if (missingMods.Contains(m))
+                        {
+                            var fixMissing = con.CreateCommand();
+                            fixMissing.CommandText = "INSERT INTO mods (id, steamId, displayName, status, source) VALUES(@id, @steamid, @name, 'to_install', 'steam')";
+                            fixMissing.Parameters.Add("@id", SqliteType.Text).Value = m.Id;
+                            fixMissing.Parameters.Add("@steamid", SqliteType.Text).Value = m.steamId;
+                            fixMissing.Parameters.Add("@name", SqliteType.Text).Value = m.DisplayName;
+                            fixMissing.ExecuteNonQuery();
+                        }
+
                         // Add mods to playsets_mods table
                         var modAdd = con.CreateCommand();
                         modAdd.CommandText = "INSERT INTO playsets_mods (playsetId, modId, position, enabled) VALUES(@psid, @mid, @position, @enabled)";
@@ -376,16 +372,6 @@ namespace StellarisPlaysetSync
                         modAdd.Parameters.Add("@position", SqliteType.Text).Value = m.PlaysetPosition;
                         modAdd.Parameters.Add("@enabled", SqliteType.Integer).Value = m.Enabled;
 
-                        modAdd.ExecuteNonQuery();
-                    }
-                    // 2.2 Add any missing mods to mods table with to_install status
-                    foreach (Mod m in missingMods)
-                    {
-                        var modAdd = con.CreateCommand();
-                        modAdd.CommandText = "INSERT INTO mods (id, steamId, displayName, status) VALUES(@id, @steamid, @name, 'to_install')";
-                        modAdd.Parameters.Add("@id", SqliteType.Text).Value = m.Id;
-                        modAdd.Parameters.Add("@steamid", SqliteType.Text).Value = m.steamId;
-                        modAdd.Parameters.Add("@name", SqliteType.Text).Value = m.DisplayName;
                         modAdd.ExecuteNonQuery();
                     }
 
@@ -397,22 +383,16 @@ namespace StellarisPlaysetSync
 
                 if (missingMods.Count > 0)
                 {
-                    if(missingMods.Count == 1)
+                    MessageBox.Show("You're missing some mods! A text editor will open with links to the mods you must subscribe to.", "Missing mod(s)");
+                    string text = "Missing Mod List" + Environment.NewLine;
+                    text += "Please subscribe to each BEFORE starting Stellaris.";
+                    foreach (Mod m in missingMods)
                     {
-                        MessageBox.Show("You're missing a mod! The Steam page for the mod will be opened, please subscribe to it.", "Missing mod");
-                        System.Diagnostics.Process.Start(@"https://steamcommunity.com/sharedfiles/filedetails/?id=" + missingMods.First<Mod>().steamId);
+                        text += string.Format("{2}{0} - https://steamcommunity.com/sharedfiles/filedetails/?id={1}", 
+                            m.DisplayName, m.steamId, Environment.NewLine);
                     }
-                    else
-                    {
-                        string text = "Missing Mod List";
-                        text += "\n Please subscribe to each BEFORE starting Stellaris.";
-                        foreach (Mod m in missingMods)
-                        {
-                            text += string.Format("\n{0} - https://steamcommunity.com/sharedfiles/filedetails/?id={1}", m.DisplayName, m.steamId);
-                        }
-                        File.WriteAllText("missingmods.txt", text);
-                        Process.Start("notepad.exe", Environment.CurrentDirectory + Path.DirectorySeparatorChar + "missingmods.txt");
-                    }
+                    File.WriteAllText("missingmods.txt", text);
+                    Process.Start("notepad.exe", Environment.CurrentDirectory + Path.DirectorySeparatorChar + "missingmods.txt");
                 }
             }
         }
