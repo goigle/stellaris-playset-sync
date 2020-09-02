@@ -1,6 +1,6 @@
 # Stellaris Playset Sync
 
-This tool is designed to make it easier to share playsets with friends before a multiplayer game, especially playsets where load order is critical. The goal was to be as simple as possible to use.
+This tool is designed to make it easier to share playsets with friends before a multiplayer game, especially playsets where load order is critical. The goal was to be as simple as possible to use. The project uses .NET Core 3.1, and theoretically could be expanded to be used on multiple platforms once .NET 5 comes out with the unified, multiplatform UI.
 
 ## Supported Platforms
  * Windows (only tested on Windows 10)
