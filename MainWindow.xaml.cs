@@ -385,7 +385,7 @@ namespace StellarisPlaysetSync
                 {
                     MessageBox.Show("You might be missing some mods! A text editor will open with links to the mods you must subscribe to.", "Missing mod(s)");
                     string text = "Missing Mod List" + Environment.NewLine;
-                    text += "Please make sure you subscribe to each BEFORE starting Stellaris. If you already subscribed but haven't opened the launcher since you have subscribed to the listed mods then you can ignore this message.";
+                    text += "Please make sure you subscribe to each BEFORE starting Stellaris. If you are already subscribed but you haven't opened the launcher since you have subscribed to the listed mods then you can ignore this message.";
                     foreach (Mod m in missingMods)
                     {
                         text += string.Format("{2}{0} - https://steamcommunity.com/sharedfiles/filedetails/?id={1}", 
