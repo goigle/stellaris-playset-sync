@@ -291,25 +291,129 @@ namespace StellarisPlaysetSync
                 MessageBox.Show("Close the Paradox Launcher before saving.", "Error");
                 return;
             }
-            // Check if there is already a playset with the imported playset name
-            if(playsets.Where(p => p.Name == importedPlayset.Name).Count() > 0)
-            {
-                // And add a suffix to the playset name if so
-                importedPlayset.Name += "_Imported";
-            }
+
             // 1. Add the playset to playsets table
-            // 2. Add any mods not in mods table to mods table with to_install status, inform user they need to download the mods
+            // 2. Add any mods not in mods table to mods table with to_install status and inform user they need to download the mods
             // 3. Add mods to playset_mods table
             var conBuilder = new SqliteConnectionStringBuilder();
             conBuilder.DataSource = dbPath;
+            List<Mod> missingMods = new List<Mod>();
             using (var con = new SqliteConnection(conBuilder.ConnectionString))
             {
                 con.Open();
-                var pInsert = con.CreateCommand();
-                pInsert.CommandText = "INSERT INTO playsets VALUES(@id, @name, 0, 'custom')";
-                pInsert.Parameters.Add("@id", SqliteType.Text).Value = importedPlayset.Id;
-                pInsert.Parameters.Add("@name", SqliteType.Text).Value = importedPlayset.Name;
+                // Adding the playset will require multiple commands
+                using (var transaction = con.BeginTransaction())
+                {
+                    // Check if there is already a playset with the imported playset name
+                    // Either add a suffix or, if the IDs match, overwrite that playset 
+                    var psCheck = con.CreateCommand();
+                    // Internal Mod IDs are GUIDs and might not be the same between PCs
+                    // Steam ID of the mod must be checked instead
+                    bool deleteById = false;
+                    psCheck.CommandText = "SELECT * FROM playsets WHERE id=@psid";
+                    psCheck.Parameters.Add("@psid", SqliteType.Text).Value = importedPlayset.Id;
+                    using(var reader = psCheck.ExecuteReader())
+                    {
+                        if(reader.Read())
+                        {
+                            deleteById = true;
+                        }
+                        // Reader found no ID-matches but there is a name match, so the playset will
+                        // have a suffix added
+                        else if (playsets.Where(p => p.Name == importedPlayset.Name).Count() > 0)
+                        {
+                            importedPlayset.Name += "_Imported";
+                        }
+                    }
+                    if (deleteById)
+                    {
+                        var psDel = con.CreateCommand();
+                        psDel.CommandText = "DELETE FROM playsets WHERE id=@psid";
+                        psDel.Parameters.Add("@psid", SqliteType.Text).Value = importedPlayset.Id;
+                        psDel.ExecuteNonQuery();
+                        psDel.CommandText = "DELETE FROM playsets_mods WHERE playsetId=@psid";
+                        psDel.ExecuteNonQuery();
+                    }
+                    // 1. Add the playset
+                    var pInsert = con.CreateCommand();
+                    pInsert.CommandText = "INSERT INTO playsets VALUES(@id, @name, 0, 'custom')";
+                    pInsert.Parameters.Add("@id", SqliteType.Text).Value = importedPlayset.Id;
+                    pInsert.Parameters.Add("@name", SqliteType.Text).Value = importedPlayset.Name;
+                    pInsert.ExecuteNonQuery();
 
+                    // 2.1 Check if mods need to be added to the mods table
+                    foreach (Mod m in importedPlayset.Mods)
+                    {
+                        var modCheck = con.CreateCommand();
+                        // Internal Mod IDs are GUIDs and might not be the same between PCs
+                        // Steam ID of the mod must be checked instead
+                        modCheck.CommandText = "SELECT id FROM mods WHERE steamid=@steamid";
+                        modCheck.Parameters.Add("@steamid", SqliteType.Text).Value = m.steamId;
+                        using (var reader = modCheck.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                string modId = reader.GetString(0);
+                                // Respect the local mod ID if it exists
+                                if (modId != m.Id)
+                                {
+                                    m.Id = modId;
+                                }
+                            }
+                            else
+                            {
+                                // If the reader did not read a row, then this mod is not on this computer
+                                // Track it to notify the user
+                                missingMods.Add(m);
+                            }
+                        }
+
+                        // Add mods to playsets_mods table
+                        var modAdd = con.CreateCommand();
+                        modAdd.CommandText = "INSERT INTO playsets_mods (playsetId, modId, position, enabled) VALUES(@psid, @mid, @position, @enabled)";
+                        modAdd.Parameters.Add("@psid", SqliteType.Text).Value = importedPlayset.Id;
+                        modAdd.Parameters.Add("@mid", SqliteType.Text).Value = m.Id;
+                        modAdd.Parameters.Add("@position", SqliteType.Text).Value = m.PlaysetPosition;
+                        modAdd.Parameters.Add("@enabled", SqliteType.Integer).Value = m.Enabled;
+
+                        modAdd.ExecuteNonQuery();
+                    }
+                    // 2.2 Add any missing mods to mods table with to_install status
+                    foreach (Mod m in missingMods)
+                    {
+                        var modAdd = con.CreateCommand();
+                        modAdd.CommandText = "INSERT INTO mods (id, steamId, displayName, status) VALUES(@id, @steamid, @name, 'to_install')";
+                        modAdd.Parameters.Add("@id", SqliteType.Text).Value = m.Id;
+                        modAdd.Parameters.Add("@steamid", SqliteType.Text).Value = m.steamId;
+                        modAdd.Parameters.Add("@name", SqliteType.Text).Value = m.DisplayName;
+                        modAdd.ExecuteNonQuery();
+                    }
+
+                    transaction.Commit();
+                }
+
+                tbStep3.Foreground = new SolidColorBrush(Colors.Green);
+                tbStep3.Text = "Playset saved";
+
+                if (missingMods.Count > 0)
+                {
+                    if(missingMods.Count == 1)
+                    {
+                        MessageBox.Show("You're missing a mod! The Steam page for the mod will be opened, please subscribe to it.", "Missing mod");
+                        System.Diagnostics.Process.Start(@"https://steamcommunity.com/sharedfiles/filedetails/?id=" + missingMods.First<Mod>().steamId);
+                    }
+                    else
+                    {
+                        string text = "Missing Mod List";
+                        text += "\n Please subscribe to each BEFORE starting Stellaris.";
+                        foreach (Mod m in missingMods)
+                        {
+                            text += string.Format("\n{0} - https://steamcommunity.com/sharedfiles/filedetails/?id={1}", m.DisplayName, m.steamId);
+                        }
+                        File.WriteAllText("missingmods.txt", text);
+                        Process.Start("notepad.exe", Environment.CurrentDirectory + Path.DirectorySeparatorChar + "missingmods.txt");
+                    }
+                }
             }
         }
     }
