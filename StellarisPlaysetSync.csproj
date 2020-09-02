@@ -4,6 +4,11 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
+    <Company>Goigle</Company>
+    <Authors>Goigle</Authors>
+    <Description>https://github.com/goigle/stellaris-playset-sync</Description>
+    <Copyright>2020 James Anderson / Goigle</Copyright>
+    <PackageProjectUrl>https://github.com/goigle/stellaris-playset-sync</PackageProjectUrl>
   </PropertyGroup>
   <ItemGroup>
   <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.0" />
