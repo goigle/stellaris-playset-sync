@@ -2,6 +2,9 @@
 
 This tool is designed to make it easier to share playsets with friends before a multiplayer game, especially playsets where load order is critical. The goal was to be as simple as possible to use. The project uses .NET Core 3.1, and theoretically could be expanded to be used on multiple platforms once .NET 5 comes out with the unified, multiplatform UI.
 
+## Download
+ * Go to the [releases section](https://github.com/goigle/stellaris-playset-sync/releases/)
+
 ## Supported Platforms
  * Windows (only tested on Windows 10)
 
@@ -11,3 +14,10 @@ This tool is designed to make it easier to share playsets with friends before a 
  * Exporting an existing playset (to share)
  * Importing a playset shared by this tool
  * Automatic backups of the launcher DB before changes
+
+## Building
+ * Download the repository
+ * In a terminal window, go to the repository on your disk
+ * Run `dotnet restore`
+ * Open the project in Visual Studio 2019
+ * Build it
