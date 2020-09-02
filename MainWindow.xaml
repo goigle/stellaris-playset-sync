@@ -1,0 +1,53 @@
+﻿<Window x:Class="StellarisPlaysetSync.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:StellarisPlaysetSync"
+        mc:Ignorable="d"
+        x:Name="mainWindow"
+        Title="Stellaris Playset Sharing Tool" Height="450" Width="1350" ResizeMode="CanMinimize" Activated="mainWindow_Activated"
+        Deactivated="mainWindow_Deactivated">
+    <Grid x:Name="mainGrid">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*" />
+        </Grid.RowDefinitions>
+        <Button Grid.Column="0" x:Name="btnShowDatabase" VerticalContentAlignment="Top" Padding="0,10" Click="btnShowDatabase_Click">
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Stretch">
+                <TextBlock FontSize="36">Step 1</TextBlock>
+                <LineBreak/>
+                <TextBlock x:Name="tbStep1" Foreground="Blue" FontWeight="Bold" FontSize="24">Locate Launcher files</TextBlock>
+            </TextBlock>
+        </Button>
+        <StackPanel Grid.Column="1" Background="#FFDDDDDD">
+            <StackPanel  Margin="30,8" HorizontalAlignment="Center">
+                <TextBlock FontSize="36">Step 2</TextBlock>
+                <TextBlock x:Name="tbStep2" Foreground="Blue" FontWeight="Bold"  FontSize="24">Import / Export</TextBlock>
+            </StackPanel>
+            <ListBox x:Name="lbPlaysets" Height="200" Margin="15,3" HorizontalContentAlignment="Stretch" SelectionChanged="lbPlaysets_SelectionChanged">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <Button x:Name="btnExport" Margin="15,3" Height="25" IsEnabled="False" Click="btnExport_Click">Export selected playset</Button>
+            <Button x:Name="btnImport" Margin="15,3" Height="70" IsEnabled="False" AllowDrop="True" Drop="btnImport_Drop" DragLeave="btnImport_DragLeave" DragEnter="btnImport_DragEnter" Click="btnImport_Click">Import playset (or drag one here)</Button>
+        </StackPanel>
+        <Button Grid.Column="3" x:Name="btnSave" VerticalAlignment="Stretch" VerticalContentAlignment="Top" Padding="0,10" IsEnabled="False" Click="btnSave_Click">
+            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Stretch">
+                <TextBlock FontSize="36">Step 3</TextBlock>
+                <LineBreak/>
+                <TextBlock x:Name="tbStep3" Foreground="SlateGray" FontWeight="Bold" FontSize="24">Import a playset before continuing</TextBlock>
+                <LineBreak />
+                <LineBreak />
+                <TextBlock x:Name="tbPsName" Foreground="Black" FontSize="14"></TextBlock>
+            </TextBlock>
+        </Button>
+    </Grid>
+</Window>
