@@ -6,48 +6,117 @@
         xmlns:local="clr-namespace:StellarisPlaysetSync"
         mc:Ignorable="d"
         x:Name="mainWindow"
-        Title="Stellaris Playset Sharing Tool" Height="450" Width="1350" ResizeMode="CanMinimize" Activated="mainWindow_Activated"
-        Deactivated="mainWindow_Deactivated">
-    <Grid x:Name="mainGrid">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" />
-            <ColumnDefinition Width="1*" />
-            <ColumnDefinition Width="1*" />
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="1*" />
-        </Grid.RowDefinitions>
-        <Button Grid.Column="0" x:Name="btnShowDatabase" VerticalContentAlignment="Top" Padding="0,10" Click="btnShowDatabase_Click">
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Stretch">
-                <TextBlock FontSize="36">Step 1</TextBlock>
-                <LineBreak/>
-                <TextBlock x:Name="tbStep1" Foreground="Blue" FontWeight="Bold" FontSize="24">Locate Launcher files</TextBlock>
-            </TextBlock>
-        </Button>
-        <StackPanel Grid.Column="1" Background="#FFDDDDDD">
-            <StackPanel  Margin="30,8" HorizontalAlignment="Center">
-                <TextBlock FontSize="36">Step 2</TextBlock>
-                <TextBlock x:Name="tbStep2" Foreground="Blue" FontWeight="Bold"  FontSize="24">Import / Export</TextBlock>
-            </StackPanel>
-            <ListBox x:Name="lbPlaysets" Height="200" Margin="15,3" HorizontalContentAlignment="Stretch" SelectionChanged="lbPlaysets_SelectionChanged">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Name}" />
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-            <Button x:Name="btnExport" Margin="15,3" Height="25" IsEnabled="False" Click="btnExport_Click">Export selected playset</Button>
-            <Button x:Name="btnImport" Margin="15,3" Height="70" IsEnabled="False" AllowDrop="True" Drop="btnImport_Drop" DragLeave="btnImport_DragLeave" DragEnter="btnImport_DragEnter" Click="btnImport_Click">Import playset (or drag one here)</Button>
-        </StackPanel>
-        <Button Grid.Column="3" x:Name="btnSave" VerticalAlignment="Stretch" VerticalContentAlignment="Top" Padding="0,10" IsEnabled="False" Click="btnSave_Click">
-            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Stretch">
-                <TextBlock FontSize="36">Step 3</TextBlock>
-                <LineBreak/>
-                <TextBlock x:Name="tbStep3" Foreground="SlateGray" FontWeight="Bold" FontSize="24">Import a playset before continuing</TextBlock>
-                <LineBreak />
-                <LineBreak />
-                <TextBlock x:Name="tbPsName" Foreground="Black" FontSize="14"></TextBlock>
-            </TextBlock>
-        </Button>
-    </Grid>
+        Title="Stellaris Playset Sharing Tool" Height="437" Width="737" ResizeMode="CanResize" 
+        WindowStartupLocation="CenterScreen" RenderTransformOrigin="0.5,0.5" Background="#FFD6D6D6" FontFamily="Arial"
+        Activated="mainWindow_Activated"
+        Deactivated="mainWindow_Deactivated"
+        Closing="mainWindow_Close"
+        AllowDrop="True"
+        DragEnter="btnImport_DragEnter"	DragLeave="btnImport_DragLeave" Drop="btnImport_Drop">
+	<Window.Resources>
+		<AlternationConverter x:Key="AlternationConverter"/>
+		<local:AttatchSteamLink x:Key="AttatchSteamLink"/>
+	</Window.Resources>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="36*"/>
+			<RowDefinition Height="359*"/>
+			<RowDefinition Height="26*"/>
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="288*"/>
+			<ColumnDefinition Width="449*"/>
+		</Grid.ColumnDefinitions>
+		<Grid Margin="10,10,10,0" Grid.Row="1">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="236*"/>
+				<RowDefinition Height="103*"/>
+			</Grid.RowDefinitions>
+			<DataGrid x:Name="dataGrid_Playsets" Margin="0,0,0,10" GridLinesVisibility="Horizontal" IsReadOnly="True" AutoGenerateColumns="False" SelectionChanged="dataGrid_Playsets_RowStateChanged" SelectionMode="Single" CanUserResizeRows="False" HorizontalGridLinesBrush="#FF2D2F5F" VerticalGridLinesBrush="{x:Null}">
+				<DataGrid.Columns>
+					<DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="100*" FontWeight="Bold"/>
+					<DataGridTextColumn Header="Load Order" Binding="{Binding LoadOrder}"/>
+					<DataGridCheckBoxColumn Header="Selected" Binding="{Binding isActive}" />
+				</DataGrid.Columns>
+			</DataGrid>
+			<Viewbox Stretch="Uniform" Grid.Row="1" Margin="0,0,0,4" StretchDirection="UpOnly">
+				<StackPanel x:Name="stackPanel">
+					<Button x:Name="button_pdx_import" Content="Import Stellaris Launcher Playset" FontSize="15" Width="{Binding ActualWidth, ElementName=dataGrid_Playsets, Mode=OneWay}" Click="button_pdx_import_Click" FontFamily="Malgun Gothic" ToolTip="If you are reading this, autoimport failed! Please close the launcher or something."/>
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="231*"/>
+							<ColumnDefinition Width="37*"/>
+						</Grid.ColumnDefinitions>
+						<Button x:Name="button_SPST_import" Content="Import Playset" FontSize="15" IsEnabled="False" FontFamily="Malgun Gothic" Click="button_SPST_import_Click" BorderThickness="1,1,0,1"/>
+						<Button x:Name="button_SPST_import_clipboard" Content="📋" ToolTip="Import from clipboard" FontSize="15" IsEnabled="False" FontFamily="Malgun Gothic" Click="button_SPST_import_clipboard_Click" Grid.Column="1" BorderThickness="0,1,1,1"/>
+					</Grid>
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="231*"/>
+							<ColumnDefinition Width="37*"/>
+						</Grid.ColumnDefinitions>
+						<Button x:Name="button_SPST_export" Content="Export Playset" FontSize="15" IsEnabled="False" FontFamily="Malgun Gothic" Click="button_SPST_export_Click" BorderThickness="1,1,0,1"/>
+						<Button x:Name="button_SPST_export_clipboard" Content="📋" ToolTip="Export from clipboard" FontSize="15" IsEnabled="False" FontFamily="Malgun Gothic" Click="button_SPST_export_clipboard_Click" Grid.Column="1" BorderThickness="0,1,1,1"/>
+					</Grid>
+					<Grid>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="231*"/>
+							<ColumnDefinition Width="37*"/>
+						</Grid.ColumnDefinitions>
+						<Button x:Name="button_pdx_export" Content="Save Playset to Stellaris" FontSize="15" IsEnabled="False" FontFamily="Malgun Gothic" Click="btnSave_Click"/>
+						<Border Grid.Column="1" BorderBrush="#FF707070" Background="#FFDDDDDD" Panel.ZIndex="1" BorderThickness="1,1,1,1">
+							<TextBlock ToolTip="Data currently same." FontSize="15" FontFamily="Malgun Gothic" HorizontalAlignment="Center" VerticalAlignment="Center" >
+                                <Run Text="💾"/>
+							</TextBlock>
+						</Border>
+					</Grid>
+				</StackPanel>
+			</Viewbox>
+		</Grid>
+
+		<DataGrid x:Name="dataGrid_Mods" Grid.Column="1" Margin="10,10,10,10" Grid.Row="1" IsReadOnly="True" AutoGenerateColumns="False" SelectionMode="Single" CanUserResizeRows="False" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#FF2D2F5F" VerticalGridLinesBrush="{x:Null}">
+			<DataGrid.Columns>
+				<DataGridTextColumn Header="Mod Name"  Binding="{Binding DisplayName}" Width="50*"/>
+				<DataGridCheckBoxColumn Header="Installed" Binding="{Binding Installed}" Width="15*"/>
+				<DataGridHyperlinkColumn Header="SteamID" Binding="{Binding steamId, Converter={StaticResource AttatchSteamLink}}" ContentBinding="{Binding steamId}"  Width="15*">
+					<DataGridHyperlinkColumn.ElementStyle>
+						<Style>
+							<EventSetter Event="Hyperlink.Click" Handler="DG_Hyperlink_Click"/>
+						</Style>
+					</DataGridHyperlinkColumn.ElementStyle>
+				</DataGridHyperlinkColumn>
+				<DataGridCheckBoxColumn Header="Enabled" Binding="{Binding Enabled}" Width="14*"/>
+			</DataGrid.Columns>
+		</DataGrid>
+		<StatusBar x:Name="statbar" Grid.ColumnSpan="2" Grid.Row="2" Margin="0,0,0,0" Foreground="White">
+			<StatusBar.Background>
+				<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+					<GradientStop Color="#FF1F253E" Offset="1"/>
+					<GradientStop Color="#FF191C2A"/>
+				</LinearGradientBrush>
+			</StatusBar.Background>
+			<Grid Width="{Binding ActualWidth, ElementName=statbar, Mode=OneWay}">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="173*"/>
+					<ColumnDefinition Width="393*"/>
+					<ColumnDefinition Width="171*"/>
+				</Grid.ColumnDefinitions>
+				<TextBlock x:Name="pdx_db_stat" Text="Launcher Errors Here" TextWrapping="Wrap" Margin="0,-3,0,0"/>
+				<TextBlock x:Name="sps_stat" Text="Nothing." TextWrapping="Wrap" Margin="5,-3,0,0" Grid.Column="1" RenderTransformOrigin="0.506,0.511"/>
+				<TextBlock x:Name="steam_stat" Text="Steam:❌" TextWrapping="Wrap" Margin="5,-3,10,0" Grid.Column="2" TextAlignment="Left"/>
+			</Grid>
+		</StatusBar>
+		<TextBlock TextWrapping="Wrap" Margin="10,10,10,3" FontSize="14" FontFamily="Malgun Gothic" Width="267"><Run Text="Playsets"/></TextBlock>
+		<Grid Grid.Column="1" Margin="10,10,29,3">
+			<TextBlock TextWrapping="Wrap" Margin="0,0,250,0" FontSize="14" FontFamily="Malgun Gothic"><Run Text="Mods Installed"/></TextBlock>
+			<Grid Margin="238,0,0,0">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="143*"/>
+					<ColumnDefinition Width="29*"/>
+				</Grid.ColumnDefinitions>
+				<Button x:Name="download_mods" Content="Download Mods" FontSize="15" ToolTip="Select a playset." Click="button_download_mods_Click"/>
+				<Button x:Name="refresh_modinstalled" Content="🔃" FontSize="15" ToolTip="Refresh the mod enabled list." Click="refresh_modinstalled_Click" Grid.Column="1"/>
+			</Grid>
+		</Grid>
+	</Grid>
 </Window>
