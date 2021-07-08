@@ -102,14 +102,14 @@ namespace StellarisPlaysetSync
             if (result == true)
             {
                 string file = save.FileName;
-                string json = JsonSerializer.Serialize(this);
+                string json = JsonSerializer.Serialize(this, options: new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(file, json);
             }
         }
         public void ExportCliboard()
         {
             // yes i know setfile thingy works but you have to make a tmp of it to be copied as a real file
-            Clipboard.SetText(JsonSerializer.Serialize(this));
+            Clipboard.SetText(JsonSerializer.Serialize(this, options: new JsonSerializerOptions { WriteIndented = true }));
         }
     }
 }

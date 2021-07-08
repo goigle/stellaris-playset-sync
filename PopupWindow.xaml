@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:StellarisPlaysetSync"
         mc:Ignorable="d"
-        Title="Downloading Mods" Height="208" Width="353" ResizeMode="NoResize" ShowInTaskbar="False" Closing="onClosing" WindowStartupLocation="CenterOwner">
+        Title="Downloading Mods" Height="208" Width="353" ResizeMode="NoResize" ShowInTaskbar="False" Closing="onClosing" WindowStartupLocation="CenterOwner" Topmost="True">
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="3*"/>

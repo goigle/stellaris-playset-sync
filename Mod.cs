@@ -1,9 +1,4 @@
-﻿using Steamworks;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace StellarisPlaysetSync
+﻿namespace StellarisPlaysetSync
 {
     public class Mod
     {
