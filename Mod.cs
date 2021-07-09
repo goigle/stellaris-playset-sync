@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace StellarisPlaysetSync
+﻿namespace StellarisPlaysetSync
 {
     public class Mod
     {
@@ -13,10 +9,7 @@ namespace StellarisPlaysetSync
         public string PlaysetPosition { get; set; }
         public bool Enabled { get; set; }
 
-        public Mod()
-        {
-
-        }
+        public Mod() { }
         public Mod(string id, string steamid, string dname, string position, bool enabled)
         {
             Id = id;
@@ -31,5 +24,10 @@ namespace StellarisPlaysetSync
             return "mod/ugc_" + steamId + ".mod";
         }
 
+    }
+
+    public class ModSteamMeta : Mod
+    {
+        public bool Installed { get; set; } = false;
     }
 }
