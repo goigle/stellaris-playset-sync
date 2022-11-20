@@ -121,7 +121,7 @@ namespace StellarisPlaysetSync
                     tbStep1.Text = "Loaded launcher data";
                     tbStep1.Foreground = new SolidColorBrush(Colors.Green);
                 }
-                if(!dbBackedUp)
+                if (!dbBackedUp)
                 {
                     File.Copy(dbPath, dbPath + "_sps_backup", true);
                     dbBackedUp = true;
@@ -154,7 +154,7 @@ namespace StellarisPlaysetSync
                 psetSelect.CommandText = "SELECT * from playsets";
                 using (var reader = psetSelect.ExecuteReader())
                 {
-                    while(reader.Read())
+                    while (reader.Read())
                         playsets.Add(new Playset(reader.GetString(0), reader.GetString(1)));
                 }
             }
@@ -321,9 +321,10 @@ namespace StellarisPlaysetSync
                     }
                     // 1. Add the playset
                     var pInsert = con.CreateCommand();
-                    pInsert.CommandText = "INSERT INTO playsets VALUES(@id, @name, 0, 'custom')";
+                    pInsert.CommandText = "INSERT INTO playsets VALUES(@id, @name, 0, 'custom', null, null, @createdon, null, null, null, 0, 0, null)";
                     pInsert.Parameters.Add("@id", SqliteType.Text).Value = importedPlayset.Id;
                     pInsert.Parameters.Add("@name", SqliteType.Text).Value = importedPlayset.Name;
+                    pInsert.Parameters.Add("@createdon", SqliteType.Integer).Value = DateTime.Now.Ticks;
                     pInsert.ExecuteNonQuery();
 
                     // 2.1 Check if mods need to be added to the mods table
@@ -388,7 +389,7 @@ namespace StellarisPlaysetSync
                     text += "Please make sure you subscribe to each BEFORE starting Stellaris. If you are already subscribed but you haven't opened the launcher since you have subscribed to the listed mods then you can ignore this message.";
                     foreach (Mod m in missingMods)
                     {
-                        text += string.Format("{2}{0} - https://steamcommunity.com/sharedfiles/filedetails/?id={1}", 
+                        text += string.Format("{2}{0} - https://steamcommunity.com/sharedfiles/filedetails/?id={1}",
                             m.DisplayName, m.steamId, Environment.NewLine);
                     }
                     File.WriteAllText("missingmods.txt", text);
